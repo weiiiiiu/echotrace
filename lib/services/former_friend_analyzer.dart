@@ -65,8 +65,14 @@ class FormerFriendResult {
 class FormerFriendAnalyzer {
   final DatabaseService _databaseService;
   int? _filterYear;
+  static const _excludedUsernames = {'filehelper'};
 
   FormerFriendAnalyzer(this._databaseService);
+
+  bool _isExcludedUsername(String username) {
+    if (username.isEmpty) return false;
+    return _excludedUsernames.contains(username.toLowerCase());
+  }
 
   void setYearFilter(int? year) {
     _filterYear = year;
@@ -121,7 +127,9 @@ class FormerFriendAnalyzer {
 
     // 2. 获取所有私聊会话
     final sessions = await _databaseService.getSessions();
-    final privateSessions = sessions.where((s) => !s.isGroup).toList();
+    final privateSessions = sessions
+        .where((s) => !s.isGroup && !_isExcludedUsername(s.username))
+        .toList();
 
     onLog?.call('找到 ${privateSessions.length} 个私聊会话', level: 'info');
 

@@ -5674,8 +5674,15 @@ class DatabaseService {
       }
 
       // 获取所有私聊会话
+      const excludedUsernames = {'filehelper'};
       final sessions = await getSessions();
-      final privateSessions = sessions.where((s) => !s.isGroup).toList();
+      final privateSessions = sessions
+          .where(
+            (s) =>
+                !s.isGroup &&
+                !excludedUsernames.contains(s.username.toLowerCase()),
+          )
+          .toList();
 
       // 使用缓存的数据库连接
       final cachedDbs = await _getCachedMessageDatabases();

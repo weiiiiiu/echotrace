@@ -7,8 +7,14 @@ import 'logger_service.dart';
 /// 数据分析服务
 class AnalyticsService {
   final DatabaseService _databaseService;
+  static const _excludedUsernames = {'filehelper'};
 
   AnalyticsService(this._databaseService);
+
+  bool _isExcludedUsername(String username) {
+    if (username.isEmpty) return false;
+    return _excludedUsernames.contains(username.toLowerCase());
+  }
 
   /// 分析私聊数据
   ///
@@ -86,7 +92,9 @@ class AnalyticsService {
     final sessions = await _databaseService.getSessions();
 
     // 2. 过滤出私聊会话
-    final privateSessions = sessions.where((s) => !s.isGroup).toList();
+    final privateSessions = sessions
+        .where((s) => !s.isGroup && !_isExcludedUsername(s.username))
+        .toList();
 
     // 3. 获取排名
     final rankings = await _getContactRankings(
@@ -106,7 +114,9 @@ class AnalyticsService {
     // 1. 获取所有私聊会话
     await logger.debug('AnalyticsService', '获取所有会话列表');
     final sessions = await _databaseService.getSessions();
-    final privateSessions = sessions.where((s) => !s.isGroup).toList();
+    final privateSessions = sessions
+        .where((s) => !s.isGroup && !_isExcludedUsername(s.username))
+        .toList();
     await logger.info(
       'AnalyticsService',
       '找到 ${privateSessions.length} 个私聊会话（总会话数: ${sessions.length}）',
@@ -366,9 +376,14 @@ class AnalyticsService {
     final rankings = <ContactRanking>[];
 
     // 批量获取显示名称
-    final displayNames = await _databaseService.getDisplayNames(usernames);
+    final filteredUsernames =
+        usernames.where((u) => !_isExcludedUsername(u)).toList();
+    if (filteredUsernames.isEmpty) return rankings;
+    final displayNames = await _databaseService.getDisplayNames(
+      filteredUsernames,
+    );
 
-    for (final username in usernames) {
+    for (final username in filteredUsernames) {
       try {
         // 使用SQL直接统计，不加载所有消息
         final stats = await _databaseService.getSessionMessageStats(username);
