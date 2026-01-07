@@ -1382,13 +1382,6 @@ class _SettingsPageState extends State<SettingsPage>
                       if (value == null || value.isEmpty) {
                         return '请输入wxid';
                       }
-                      final isWxidFormat = RegExp(
-                        r'^wxid_[a-zA-Z0-9]{14}_[a-zA-Z0-9]{4}$',
-                        caseSensitive: false,
-                      ).hasMatch(value.trim());
-                      if (!isWxidFormat) {
-                        return '请到数据库根目录的文件夹下复制wxid开头的文件夹名字并填入（格式应为wxid_*_*）';
-                      }
                       return null;
                     },
                   ),
